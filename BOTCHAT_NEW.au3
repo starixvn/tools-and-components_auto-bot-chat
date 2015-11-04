@@ -8,9 +8,9 @@
 #include <WindowsConstants.au3>
 #include <GUIConstantsEx.au3>
 #include <String.au3>
+#include <Date.au3>
 #include <Dependencies\WinHttp.au3>
 #include <Dependencies\JSON.au3>
-;#include <Dependencies\JSON_Translate.au3> ; examples of translator functions, includes JSON_pack and JSON_unpack
 #include <FileConstants.au3>
 #include <WinAPIFiles.au3>
 
@@ -19,48 +19,12 @@
 ; Language:       English
 ; Platform:       Win9x/NT
 ; Author:         JamesN
+; Editor: 		  Larry.Tran
 ; Script Function:
 ;  Auto chat skype/Line
-
-;http://10.18.200.114:81/api/LogManager/GetAppLog
-; The data to be sent
-
-$APIink = "http://63.216.192.186/applogapi/api/LogManager/GetAppLog"
-
-; Logs from last 5 min till now
-$fromtime = @MON & "%2f" & @MDAY &"%2f"& @YEAR & "+"& @HOUR &":"&@MIN-5&":"&@SEC
-$totime =@MON &"%2f"&@MDAY&"%2f"&@YEAR& "+"& @HOUR&":"&@MIN&":"&@SEC
-$sPD = $APIink&'?Todate='&$totime&'&FromDate='&$fromtime&'&ClientTimeZone=7&IsProduction=1&Severity=Error%2c+Critical'
-;$sPD = $APIink&'?Todate=10%2f30%2f2015+14:57:39&FromDate=10%2f30%2f2015+14:52:39&ClientTimeZone=7&IsProduction=1&Severity=Error%2c+Critical'
-
-; Creating the object
-$oHTTP = ObjCreate("winhttp.winhttprequest.5.1")
-$oHTTP.Open("GET",$sPD, False)
-$oHTTP.SetCredentials("kbt\webdeployer.vn","&hdke839D#4GY!)", 0)
-; Performing the Request
-$oHTTP.Send()
-
-; Download the body response if any, and get the server status response code.
-$oReceived = $oHTTP.ResponseText
-$oStatusCode = $oHTTP.Status
-
-If $oStatusCode <> 200 then
- MsgBox(4096, "Response code", $oStatusCode)
-EndIf
-
-
-;Decode Json data
-Local $Data = Json_Decode($oReceived)
-
-
-;===========Config=============
-Opt("SendKeyDelay", 0)
-;====END CONFIG===
-
+;------------------------------------------------------------------------------------------
 
 ;===========Functions=============
-
-
 Func LoginLine($userid, $pwd)
 	WinActivate("[Class:Qt5QWindowIcon]")
 	local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
@@ -93,27 +57,29 @@ Func checklinestatus()
 EndFunc
 
 
-Func Skypechat(ByRef $vUsername, ByRef $vContent)
-	Local $wktitle = WinGetTitle("Skype™","")
-	WinActivate($wktitle)
-	ControlFocus($wktitle, "","[CLASS:TConversationsControl; INSTANCE:1")
-	Sleep(500)
-	ControlClick($wktitle, "","[CLASS:TSearchControl; INSTANCE:1]")
-	;AutoItSetOption("SendKeyDelay", 10)
-	Send($vUsername)
-	Sleep(2000)
-	; Send("{TAB}")
-	; Send("{TAB}")
-	Send("{ENTER}")
-	Sleep(1000)
-	For $i=0 To UBound($vContent) - 1
-	   If $vContent[$i]<>"" Then
-		   Send($vContent[$i])
-		   Send("{LSHIFT}+{ENTER}")
-		   EndIf
-		Next
-	Send("________________________________")
-	Send("{ENTER}")
+Func Skypechat($vUsername, $vContent)
+	If $vUsername <> "" Then
+		Local $wktitle = WinGetTitle("Skype™","")
+		WinActivate($wktitle)
+		ControlFocus($wktitle, "","[CLASS:TConversationsControl; INSTANCE:1")
+		Sleep(500)
+		ControlClick($wktitle, "","[CLASS:TSearchControl; INSTANCE:1]")
+		;AutoItSetOption("SendKeyDelay", 10)
+		Send($vUsername)
+		Sleep(2000)
+		; Send("{TAB}")
+		; Send("{TAB}")
+		Send("{ENTER}")
+		Sleep(1000)
+		For $i=0 To UBound($vContent) - 1
+		   If $vContent[$i]<>"" Then
+			   Send($vContent[$i])
+			   Send("{LSHIFT}+{ENTER}")
+			   EndIf
+			Next
+		Send("________________________________")
+		Send("{ENTER}")
+	EndIf
 EndFunc
 
 Func linechat($lUsername, $lContent)
@@ -143,67 +109,126 @@ Func linechat($lUsername, $lContent)
 	EndIf
 EndFunc
 
+Func GetMessage($logItem)
+	Local $messageContent =[]
 
-Func botchatskype()
-   For $i=0 to UBound($Data)-1
-   Local $Tempcontent =[]
-   Local $category =   Json_Get($Data[$i],'.Category.CategoryName')
-   _ArrayAdd($Tempcontent,"Category: "&$category)
-   Local $Timestamp1 = StringSplit (Json_Get($Data[$i],'.Timestamp'),"T",1)
-   Local $Timestamp = @MON & "/" & @MDAY &"/"& @YEAR & " " & $Timestamp1[2]
-    _ArrayAdd($Tempcontent,"Timestamp: "&$Timestamp)
-   Local $Severity = Json_Get($Data[$i],'.Severity')
-    _ArrayAdd($Tempcontent,"Severity: "&$Severity)
-   Local $Message = StringReplace(Json_Get($Data[$i],'.Message'),@CR,"")
-   _ArrayAdd($Tempcontent,"Message: "&$Message)
-   Local $URL =StringReplace(Json_Get($Data[$i],'.Url'),@CR,"")
-   _ArrayAdd($Tempcontent,"URL: "&$URL)
-   Local $referrer =StringReplace(Json_Get($Data[$i],'.Referrer'),@CR,"")
-   _ArrayAdd($Tempcontent,"REFERRER: "&$referrer)
-   Local $domain =Json_Get($Data[$i],'.AppDomainName')
-   _ArrayAdd($Tempcontent,"DOMAIN: "&$domain)
-   Local $Machine = Json_Get($Data[$i],'.Machine.MachineName')
-   _ArrayAdd($Tempcontent,"MACHINE: "&$Machine)
-   Local $SkypeGroup = Json_Get($Data[$i],'.GroupChat.SkypeGroup')
-   Skypechat($SkypeGroup,$Tempcontent)
-Next
- EndFunc
+	Local $category =   Json_Get($logItem,'.Category.CategoryName')
+	_ArrayAdd($messageContent,"Category: "&$category)
 
-Func botchatline()
+	Local $Timestamp = StringReplace(Json_Get($logItem,'.Timestamp'),"T"," ")
+	_ArrayAdd($messageContent,"Timestamp: "&$Timestamp)
+
+	Local $Severity = Json_Get($logItem,'.Severity')
+	_ArrayAdd($messageContent,"Severity: "&$Severity)
+
+	Local $Message = StringReplace(Json_Get($logItem,'.Message'),@CR,"")
+	_ArrayAdd($messageContent,"Message: "&$Message)
+
+	Local $URL =StringReplace(Json_Get($logItem,'.Url'),@CR,"")
+	_ArrayAdd($messageContent,"URL: "&$URL)
+
+	Local $referrer =StringReplace(Json_Get($logItem,'.Referrer'),@CR,"")
+	_ArrayAdd($messageContent,"REFERRER: "&$referrer)
+
+	Local $domain =Json_Get($logItem,'.AppDomainName')
+	_ArrayAdd($messageContent,"DOMAIN: "&$domain)
+
+	Local $Machine = Json_Get($logItem,'.Machine.MachineName')
+	_ArrayAdd($messageContent,"MACHINE: "&$Machine)
+
+	Return $messageContent;
+EndFunc
+
+Func botchatskype($Data)
 	For $i=0 to UBound($Data)-1
-	   Local $Tempcontent =[]
-	   Local $category =   Json_Get($Data[$i],'.Category.CategoryName')
-	   _ArrayAdd($Tempcontent,"Category: "&$category)
-	   Local $Timestamp1 = StringSplit (Json_Get($Data[$i],'.Timestamp'),"T",1)
-	   Local $Timestamp = @MON & "/" & @MDAY &"/"& @YEAR & " " & $Timestamp1[2]
-		_ArrayAdd($Tempcontent,"Timestamp: "&$Timestamp)
-	   Local $Severity = Json_Get($Data[$i],'.Severity')
-		_ArrayAdd($Tempcontent,"Severity: "&$Severity)
-	   Local $Message = StringReplace(Json_Get($Data[$i],'.Message'),@CR,"")
-	   _ArrayAdd($Tempcontent,"Message: "&$Message)
-	   Local $URL =StringReplace(Json_Get($Data[$i],'.Url'),@CR,"")
-	   _ArrayAdd($Tempcontent,"URL: "&$URL)
-	   Local $referrer =StringReplace(Json_Get($Data[$i],'.Referrer'),@CR,"")
-	   _ArrayAdd($Tempcontent,"REFERRER: "&$referrer)
-	   Local $domain =Json_Get($Data[$i],'.AppDomainName')
-	   _ArrayAdd($Tempcontent,"DOMAIN: "&$domain)
-	   Local $Machine = Json_Get($Data[$i],'.Machine.MachineName')
-	   _ArrayAdd($Tempcontent,"MACHINE: "&$Machine)
-	   ;Local $SkypeGroup = Json_Get($Data[$i],'.GroupChat.SkypeGroup')
-	   Linechat("teka",$Tempcontent)
+		Local $logItem = $Data[$i]
+
+		Local $messageContent = GetMessage($logItem)
+
+		Local $SkypeGroup = Json_Get($logItem,'.GroupChat.SkypeGroup')
+
+		Skypechat($SkypeGroup,$messageContent)
 	Next
 EndFunc
 
+Func botchatline($Data)
+	For $i=0 to UBound($Data)-1
+		Local $logItem = $Data[$i]
+
+		Local $messageContent = GetMessage($logItem)
+
+		Local $lineGroup = Json_Get($logItem,'.GroupChat.LineGroup')
+
+		Linechat($lineGroup,$messageContent)
+	Next
+EndFunc
+
+Func GetAppLog($sAPILink, $user, $password)
+	; Creating the object
+	Local $oHTTP = ObjCreate("winhttp.winhttprequest.5.1")
+	$oHTTP.Open("GET",$sAPILink, False)
+	$oHTTP.SetCredentials($user,$password, 0)
+	; Performing the Request
+	$oHTTP.Send()
+
+	; Download the body response if any, and get the server status response code.
+	Local $oReceived = $oHTTP.ResponseText
+	Local $oStatusCode = $oHTTP.Status
+
+	If $oStatusCode <> 200 then
+		MsgBox($MB_SYSTEMMODAL, "Response code", $oStatusCode)
+	EndIf
+
+	;Decode Json data
+	Local $Data = Json_Decode($oReceived)
+
+	Return $Data
+EndFunc
+
+Func EncodeDateTime($dateTime)
+	Local $result = StringReplace(StringReplace($dateTime,"/","%2f")," ","+")
+
+	Return $result
+EndFunc
 
 
+Func Initialize()
+	;===========Config=============
+	Opt("SendKeyDelay", 0)
 
+	;Local Environment:
+	Local $sAPILink = "http://10.18.200.114:81/api/LogManager/GetAppLog"
+	Local $user = "spvn\jenkins.ci"
+	Local $password = "sunrise"
+
+	;Production Environment:
+	;Local $sAPILink = "http://63.216.192.186/applogapi/api/LogManager/GetAppLog"
+	;Local $user = "kbt\webdeployer.vn"
+	;Local $password = "&hdke839D#4GY!)"
+
+	; Logs from last 5 min till now
+	Local $toDateTime = _NowCalc()
+	Local $fromDateTime = _DateAdd('n', -5, $toDateTime)
+	$toDateTime = EncodeDateTime($toDateTime)
+	$fromDateTime = EncodeDateTime($fromDateTime)
+
+	$sAPILink = $sAPILink & '?FromDate=' & $fromDateTime & '&ToDate=' & $toDateTime &  '&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+	;debug
+	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f03+15:55:00&ToDate=2015%2f11%2f03+16:00:00&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+
+	Local $logData = GetAppLog($sAPILink, $user, $password)
+
+	If UBound($logData) > 0 Then
+		botchatskype($logData)
+
+		;checklinestatus()
+		;botchatline($logData)
+	EndIf
+
+EndFunc
 
 ;====END FUNCs===
 
 
 ;===========Main Steps=============
-;Star Line and Skype apps
-;checklinestatus()
-botchatskype()
-;botchatline()
-
+Initialize()
