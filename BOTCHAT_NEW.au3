@@ -8,9 +8,9 @@
 #include <WindowsConstants.au3>
 #include <GUIConstantsEx.au3>
 #include <String.au3>
-#include <WinHttp.au3>
-#include <JSON.au3>
-#include <JSON_Translate.au3> ; examples of translator functions, includes JSON_pack and JSON_unpack
+#include <Dependencies\WinHttp.au3>
+#include <Dependencies\JSON.au3>
+;#include <Dependencies\JSON_Translate.au3> ; examples of translator functions, includes JSON_pack and JSON_unpack
 #include <FileConstants.au3>
 #include <WinAPIFiles.au3>
 
@@ -61,87 +61,87 @@ Opt("SendKeyDelay", 0)
 ;===========Functions=============
 
 
-Func LoginLine(ByRef $userid, ByRef $pwd)
-WinActivate("[Class:Qt5QWindowIcon]")
-local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
-local $gX =$a[0]+100
-Local $gY =$a[1]+165
-MouseClick($MOUSE_CLICK_LEFT,$gX,$gY,3)
-Sleep(1000)
-Send($userid)
-Send("{TAB}")
-Send($pwd)
-Send("{ENTER}")
-Sleep(3000)
+Func LoginLine($userid, $pwd)
+	WinActivate("[Class:Qt5QWindowIcon]")
+	local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
+	local $gX =$a[0]+100
+	Local $gY =$a[1]+165
+	MouseClick($MOUSE_CLICK_LEFT,$gX,$gY,3)
+	Sleep(1000)
+	Send($userid)
+	Send("{TAB}")
+	Send($pwd)
+	Send("{ENTER}")
+	Sleep(3000)
 EndFunc
 
 Func checklinestatus()
-Run("C:\Program Files (x86)\LINE\LINE.exe")
-Sleep(2000)
-$hwnd = WinGetHandle("[ACTIVE]")
-$aStyle = DllCall("user32.dll", "long", "GetWindowLong", "hwnd", $hwnd, "int", -16)
-$aExStyle = DllCall("user32.dll", "long", "GetWindowLong", "hwnd", $hwnd, "int", -20)
-Local $gstyle=Hex($aStyle[0])
-Local $gexstyle=Hex($aExStyle[0])
-;If Line is logged user out then relogin
-   If $gstyle<>"96CF0000" And $aExStyle<>"00000100" Then
+	Run("C:\Program Files (x86)\LINE\LINE.exe")
+	Sleep(2000)
+	$hwnd = WinGetHandle("[ACTIVE]")
+	$aStyle = DllCall("user32.dll", "long", "GetWindowLong", "hwnd", $hwnd, "int", -16)
+	$aExStyle = DllCall("user32.dll", "long", "GetWindowLong", "hwnd", $hwnd, "int", -20)
+	Local $gstyle=Hex($aStyle[0])
+	Local $gexstyle=Hex($aExStyle[0])
+	;If Line is logged user out then relogin
+	If $gstyle<>"96CF0000" And $aExStyle<>"00000100" Then
 	  WinActivate("[Class:Qt5QWindowIcon]")
 	  Send("{ENTER}")
 	  Sleep(2000)
 	  loginLine("it@starixsoft.com","2211aa")
-   EndIf
+	EndIf
 EndFunc
 
 
 Func Skypechat(ByRef $vUsername, ByRef $vContent)
-	  Local $wktitle = WinGetTitle("Skype™","")
-	  WinActivate($wktitle)
-	  ControlFocus($wktitle, "","[CLASS:TConversationsControl; INSTANCE:1")
-	  Sleep(500)
-	  ControlClick($wktitle, "","[CLASS:TSearchControl; INSTANCE:1]")
-	  ;AutoItSetOption("SendKeyDelay", 10)
-	  Send($vUsername)
-	  Sleep(2000)
-	 ; Send("{TAB}")
-	 ; Send("{TAB}")
-	  Send("{ENTER}")
-	  Sleep(1000)
-		For $i=0 To UBound($vContent) - 1
-		   If $vContent[$i]<>"" Then
-			   Send($vContent[$i])
-			   Send("{LSHIFT}+{ENTER}")
-			   EndIf
-			Next
-	  Send("________________________________")
-	  Send("{ENTER}")
-   EndFunc
+	Local $wktitle = WinGetTitle("Skype™","")
+	WinActivate($wktitle)
+	ControlFocus($wktitle, "","[CLASS:TConversationsControl; INSTANCE:1")
+	Sleep(500)
+	ControlClick($wktitle, "","[CLASS:TSearchControl; INSTANCE:1]")
+	;AutoItSetOption("SendKeyDelay", 10)
+	Send($vUsername)
+	Sleep(2000)
+	; Send("{TAB}")
+	; Send("{TAB}")
+	Send("{ENTER}")
+	Sleep(1000)
+	For $i=0 To UBound($vContent) - 1
+	   If $vContent[$i]<>"" Then
+		   Send($vContent[$i])
+		   Send("{LSHIFT}+{ENTER}")
+		   EndIf
+		Next
+	Send("________________________________")
+	Send("{ENTER}")
+EndFunc
 
-Func linechat(ByRef $lUsername, ByRef $lContent)
-   ;Capture  LINE UI  by Class properties
-	  Local $linetitle =  WinWait("[CLASS:Qt5QWindowIcon]", "", 3)
-      WinActivate($linetitle)
-	  local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
-	  local $gX =$a[0]+150
-	  Local $gY =$a[1]+180
-	  MouseClick($MOUSE_CLICK_LEFT,$a[0]+75,$a[1]+70,1) ;click Contact tab by coordinate
-	  Sleep(1000)
-	  Send("{TAB}")
-	  Send($lUsername)
-	  Sleep(2000)
-	  MouseClick($MOUSE_CLICK_LEFT,$gX,$gY,2) ;Double click on search result name by coordinate
-	  Sleep(1500)
-	  Local $wlusertitle = WinGetTitle("[ACTIVE]") ; Check User exist or Not
-		 If $wlusertitle = $lUsername Then ;If exist then input content
-			for $i=0 To UBound($lContent) - 1
-			   Send($lContent[$i]&"{LSHIFT}+{ENTER}")
-			  ;Send("{LSHIFT}{ENTER}")
-			   Sleep(200)
-			Next
-			Send("{ENTER}")
-			Send("{ESCAPE}")
-			Sleep(500)
-		 EndIf
-	  EndFunc
+Func linechat($lUsername, $lContent)
+	;Capture  LINE UI  by Class properties
+	Local $linetitle =  WinWait("[CLASS:Qt5QWindowIcon]", "", 3)
+	WinActivate($linetitle)
+	local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
+	local $gX =$a[0]+150
+	Local $gY =$a[1]+180
+	MouseClick($MOUSE_CLICK_LEFT,$a[0]+75,$a[1]+70,1) ;click Contact tab by coordinate
+	Sleep(1000)
+	Send("{TAB}")
+	Send($lUsername)
+	Sleep(2000)
+	MouseClick($MOUSE_CLICK_LEFT,$gX,$gY,2) ;Double click on search result name by coordinate
+	Sleep(1500)
+	Local $wlusertitle = WinGetTitle("[ACTIVE]") ; Check User exist or Not
+	If $wlusertitle = $lUsername Then ;If exist then input content
+		for $i=0 To UBound($lContent) - 1
+		   Send($lContent[$i]&"{LSHIFT}+{ENTER}")
+		  ;Send("{LSHIFT}{ENTER}")
+		   Sleep(200)
+		Next
+		Send("{ENTER}")
+		Send("{ESCAPE}")
+		Sleep(500)
+	EndIf
+EndFunc
 
 
 Func botchatskype()
@@ -170,29 +170,29 @@ Next
  EndFunc
 
 Func botchatline()
-   For $i=0 to UBound($Data)-1
-   Local $Tempcontent =[]
-   Local $category =   Json_Get($Data[$i],'.Category.CategoryName')
-   _ArrayAdd($Tempcontent,"Category: "&$category)
-   Local $Timestamp1 = StringSplit (Json_Get($Data[$i],'.Timestamp'),"T",1)
-   Local $Timestamp = @MON & "/" & @MDAY &"/"& @YEAR & " " & $Timestamp1[2]
-    _ArrayAdd($Tempcontent,"Timestamp: "&$Timestamp)
-   Local $Severity = Json_Get($Data[$i],'.Severity')
-    _ArrayAdd($Tempcontent,"Severity: "&$Severity)
-   Local $Message = StringReplace(Json_Get($Data[$i],'.Message'),@CR,"")
-   _ArrayAdd($Tempcontent,"Message: "&$Message)
-   Local $URL =StringReplace(Json_Get($Data[$i],'.Url'),@CR,"")
-   _ArrayAdd($Tempcontent,"URL: "&$URL)
-   Local $referrer =StringReplace(Json_Get($Data[$i],'.Referrer'),@CR,"")
-   _ArrayAdd($Tempcontent,"REFERRER: "&$referrer)
-   Local $domain =Json_Get($Data[$i],'.AppDomainName')
-   _ArrayAdd($Tempcontent,"DOMAIN: "&$domain)
-   Local $Machine = Json_Get($Data[$i],'.Machine.MachineName')
-   _ArrayAdd($Tempcontent,"MACHINE: "&$Machine)
-   ;Local $SkypeGroup = Json_Get($Data[$i],'.GroupChat.SkypeGroup')
-   Linechat("teka",$Tempcontent)
-Next
- EndFunc
+	For $i=0 to UBound($Data)-1
+	   Local $Tempcontent =[]
+	   Local $category =   Json_Get($Data[$i],'.Category.CategoryName')
+	   _ArrayAdd($Tempcontent,"Category: "&$category)
+	   Local $Timestamp1 = StringSplit (Json_Get($Data[$i],'.Timestamp'),"T",1)
+	   Local $Timestamp = @MON & "/" & @MDAY &"/"& @YEAR & " " & $Timestamp1[2]
+		_ArrayAdd($Tempcontent,"Timestamp: "&$Timestamp)
+	   Local $Severity = Json_Get($Data[$i],'.Severity')
+		_ArrayAdd($Tempcontent,"Severity: "&$Severity)
+	   Local $Message = StringReplace(Json_Get($Data[$i],'.Message'),@CR,"")
+	   _ArrayAdd($Tempcontent,"Message: "&$Message)
+	   Local $URL =StringReplace(Json_Get($Data[$i],'.Url'),@CR,"")
+	   _ArrayAdd($Tempcontent,"URL: "&$URL)
+	   Local $referrer =StringReplace(Json_Get($Data[$i],'.Referrer'),@CR,"")
+	   _ArrayAdd($Tempcontent,"REFERRER: "&$referrer)
+	   Local $domain =Json_Get($Data[$i],'.AppDomainName')
+	   _ArrayAdd($Tempcontent,"DOMAIN: "&$domain)
+	   Local $Machine = Json_Get($Data[$i],'.Machine.MachineName')
+	   _ArrayAdd($Tempcontent,"MACHINE: "&$Machine)
+	   ;Local $SkypeGroup = Json_Get($Data[$i],'.GroupChat.SkypeGroup')
+	   Linechat("teka",$Tempcontent)
+	Next
+EndFunc
 
 
 
