@@ -84,29 +84,32 @@ Func Skypechat($vUsername, $vContent)
 EndFunc
 
 Func linechat($lUsername, $lContent)
-	;Capture  LINE UI  by Class properties
-	Local $linetitle =  WinWait("[CLASS:Qt5QWindowIcon]", "", 3)
-	WinActivate($linetitle)
-	local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
-	local $gX =$a[0]+150
-	Local $gY =$a[1]+180
-	MouseClick($MOUSE_CLICK_LEFT,$a[0]+75,$a[1]+70,1) ;click Contact tab by coordinate
-	Sleep(1000)
-	Send("{TAB}")
-	Send($lUsername)
-	Sleep(2000)
-	MouseClick($MOUSE_CLICK_LEFT,$gX,$gY,2) ;Double click on search result name by coordinate
-	Sleep(1500)
-	Local $wlusertitle = WinGetTitle("[ACTIVE]") ; Check User exist or Not
-	If $wlusertitle = $lUsername Then ;If exist then input content
-		for $i=0 To UBound($lContent) - 1
-		   Send($lContent[$i]&"{LSHIFT}+{ENTER}")
-		  ;Send("{LSHIFT}{ENTER}")
-		   Sleep(200)
-		Next
-		Send("{ENTER}")
-		Send("{ESCAPE}")
-		Sleep(500)
+	If $lUsername <> "" Then
+		;Capture  LINE UI  by Class properties
+		Local $linetitle =  WinWait("[CLASS:Qt5QWindowIcon]", "", 3)
+		WinActivate($linetitle)
+
+		local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
+		local $gX =$a[0]+150
+		Local $gY =$a[1]+180
+		MouseClick($MOUSE_CLICK_LEFT,$a[0]+75,$a[1]+70,1) ;click Contact tab by coordinate
+		Sleep(1000)
+		Send("{TAB}")
+		Send($lUsername)
+		Sleep(1000)
+		MouseClick($MOUSE_CLICK_LEFT,$gX,$gY,2) ;Double click on search result name by coordinate
+		Sleep(1500)
+		Local $wlusertitle = WinGetTitle("[ACTIVE]") ; Check User exist or Not
+		If $wlusertitle = $lUsername Then ;If exist then input content
+			For $i=0 To UBound($lContent) - 1
+			   Send($lContent[$i]&"{LSHIFT}+{ENTER}")
+			  ;Send("{LSHIFT}{ENTER}")
+			   Sleep(200)
+			Next
+			Send("{ENTER}")
+			Send("{ESCAPE}")
+			Sleep(500)
+		EndIf
 	EndIf
 EndFunc
 
@@ -215,7 +218,7 @@ Func Initialize()
 
 	$sAPILink = $sAPILink & '?FromDate=' & $fromDateTime & '&ToDate=' & $toDateTime &  '&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;debug
-	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f05+5:00:00&ToDate=2015%2f11%2f05+9:00:00&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f03+12:55:00&ToDate=2015%2f11%2f03+17:00:00&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;MsgBox($MB_SYSTEMMODAL, "API Link", $sAPILink)
 
 	Local $logData = GetAppLog($sAPILink, $user, $password)
