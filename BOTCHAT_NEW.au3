@@ -93,12 +93,12 @@ Func linechat($lUsername, $lContent)
 		local $gX =$a[0]+150
 		Local $gY =$a[1]+180
 		MouseClick($MOUSE_CLICK_LEFT,$a[0]+75,$a[1]+70,1) ;click Contact tab by coordinate
-		Sleep(1000)
+		Sleep(500)
 		Send("{TAB}")
 		Send($lUsername)
-		Sleep(1000)
+		Sleep(500)
 		MouseClick($MOUSE_CLICK_LEFT,$gX,$gY,2) ;Double click on search result name by coordinate
-		Sleep(1500)
+		Sleep(500)
 		Local $wlusertitle = WinGetTitle("[ACTIVE]") ; Check User exist or Not
 		If $wlusertitle = $lUsername Then ;If exist then input content
 			For $i=0 To UBound($lContent) - 1
@@ -226,8 +226,8 @@ Func Initialize()
 	If UBound($logData) > 0 Then
 		botchatskype($logData)
 
-		;checklinestatus()
-		;botchatline($logData)
+		checklinestatus()
+		botchatline($logData)
 	EndIf
 
 EndFunc
