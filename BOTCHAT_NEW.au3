@@ -66,11 +66,11 @@ Func Skypechat($vUsername, $vContent)
 		ControlClick($wktitle, "","[CLASS:TSearchControl; INSTANCE:1]")
 		;AutoItSetOption("SendKeyDelay", 10)
 		Send($vUsername)
-		Sleep(2000)
+		Sleep(500)
 		; Send("{TAB}")
 		; Send("{TAB}")
 		Send("{ENTER}")
-		Sleep(1000)
+		Sleep(500)
 		For $i=0 To UBound($vContent) - 1
 		   If $vContent[$i]<>"" Then
 			   Send($vContent[$i])
@@ -79,6 +79,7 @@ Func Skypechat($vUsername, $vContent)
 			Next
 		Send("________________________________")
 		Send("{ENTER}")
+		Sleep(1000)
 	EndIf
 EndFunc
 
@@ -112,7 +113,7 @@ EndFunc
 Func GetMessage($logItem)
 	Local $messageContent =[]
 
-	Local $category =   Json_Get($logItem,'.Category.CategoryName')
+	Local $category = Json_Get($logItem,'.Category.CategoryName')
 	_ArrayAdd($messageContent,"Category: "&$category)
 
 	Local $Timestamp = StringReplace(Json_Get($logItem,'.Timestamp'),"T"," ")
@@ -121,13 +122,13 @@ Func GetMessage($logItem)
 	Local $Severity = Json_Get($logItem,'.Severity')
 	_ArrayAdd($messageContent,"Severity: "&$Severity)
 
-	Local $Message = StringReplace(Json_Get($logItem,'.Message'),@CR,"")
+	Local $Message = Json_Get($logItem,'.Message')
 	_ArrayAdd($messageContent,"Message: "&$Message)
 
-	Local $URL =StringReplace(Json_Get($logItem,'.Url'),@CR,"")
+	Local $URL = Json_Get($logItem,'.Url')
 	_ArrayAdd($messageContent,"URL: "&$URL)
 
-	Local $referrer =StringReplace(Json_Get($logItem,'.Referrer'),@CR,"")
+	Local $referrer = Json_Get($logItem,'.Referrer')
 	_ArrayAdd($messageContent,"REFERRER: "&$referrer)
 
 	Local $domain =Json_Get($logItem,'.AppDomainName')
@@ -197,14 +198,14 @@ Func Initialize()
 	Opt("SendKeyDelay", 0)
 
 	;Local Environment:
-	Local $sAPILink = "http://10.18.200.114:81/api/LogManager/GetAppLog"
-	Local $user = "spvn\jenkins.ci"
-	Local $password = "sunrise"
+	;Local $sAPILink = "http://10.18.200.114:81/api/LogManager/GetAppLog"
+	;Local $user = "spvn\jenkins.ci"
+	;Local $password = "sunrise"
 
 	;Production Environment:
-	;Local $sAPILink = "http://63.216.192.186/applogapi/api/LogManager/GetAppLog"
-	;Local $user = "kbt\webdeployer.vn"
-	;Local $password = "&hdke839D#4GY!)"
+	Local $sAPILink = "http://63.216.192.186/applogapi/api/LogManager/GetAppLog"
+	Local $user = "kbt\webdeployer.vn"
+	Local $password = "&hdke839D#4GY!)"
 
 	; Logs from last 5 min till now
 	Local $toDateTime = _NowCalc()
@@ -214,7 +215,8 @@ Func Initialize()
 
 	$sAPILink = $sAPILink & '?FromDate=' & $fromDateTime & '&ToDate=' & $toDateTime &  '&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;debug
-	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f03+15:55:00&ToDate=2015%2f11%2f03+16:00:00&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f05+5:00:00&ToDate=2015%2f11%2f05+9:00:00&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+	;MsgBox($MB_SYSTEMMODAL, "API Link", $sAPILink)
 
 	Local $logData = GetAppLog($sAPILink, $user, $password)
 
