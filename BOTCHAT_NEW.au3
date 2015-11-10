@@ -11,6 +11,7 @@
 #include <Date.au3>
 #include <Dependencies\WinHttp.au3>
 #include <Dependencies\JSON.au3>
+#include <Dependencies\DateTimeConvert.au3>
 #include <FileConstants.au3>
 #include <WinAPIFiles.au3>
 
@@ -23,6 +24,13 @@
 ; Script Function:
 ;  Auto chat skype/Line
 ;------------------------------------------------------------------------------------------
+
+;===========Global Variables========
+Global $skypeProcessName = "Skype.exe"
+Global $skypeExecutableFilePath = "C:\Program Files (x86)\Skype\Phone\Skype.exe"
+
+Global $lineExecutableFilePath = "C:\Program Files (x86)\LINE\LINE.exe"
+
 
 ;===========Functions=============
 Func LoginLine($userid, $pwd)
@@ -39,38 +47,84 @@ Func LoginLine($userid, $pwd)
 	Sleep(3000)
 EndFunc
 
-Func checklinestatus()
-	Run("C:\Program Files (x86)\LINE\LINE.exe")
+Func RunAndLoginLineIfNotLogin($user, $password)
+	Run($lineExecutableFilePath)
 	Sleep(2000)
+
 	$hwnd = WinGetHandle("[ACTIVE]")
 	$aStyle = DllCall("user32.dll", "long", "GetWindowLong", "hwnd", $hwnd, "int", -16)
 	$aExStyle = DllCall("user32.dll", "long", "GetWindowLong", "hwnd", $hwnd, "int", -20)
 	Local $gstyle=Hex($aStyle[0])
 	Local $gexstyle=Hex($aExStyle[0])
+
 	;If Line is logged user out then relogin
 	If $gstyle<>"96CF0000" And $aExStyle<>"00000100" Then
 	  WinActivate("[Class:Qt5QWindowIcon]")
 	  Send("{ENTER}")
 	  Sleep(2000)
-	  loginLine("it@starixsoft.com","2211aa")
+
+	  LoginLine($user, $password)
 	EndIf
+
 EndFunc
 
+Func RunAndLoginSkypeIfNotLogin($user, $password)
 
-Func Skypechat($vUsername, $vContent)
+	If ProcessExists($skypeProcessName) == 0 Then
+		Run($skypeExecutableFilePath)
+
+		Sleep(2000)
+	EndIf
+
+	Local $windowsTitle = ""
+	Local $skypeLoginTitle = "Skype"
+
+	While $windowsTitle == ""
+		$windowsTitle = WinGetTitle($skypeLoginTitle)
+
+		If $windowsTitle == "" Then
+			Sleep(1000)
+		EndIf
+	WEnd
+
+	;Login Skype
+	If $windowsTitle == $skypeLoginTitle Then
+		WinActivate($windowsTitle)
+		WinWaitActive($windowsTitle)
+
+		;type User Name
+		MouseClick("Left",264,153)
+		Send($user)
+
+		;type Password
+		MouseClick("Left",249,206)
+		Send($password)
+
+		;Click Sign In Button
+		MouseClick("Left",354,260)
+
+		Sleep(10000)
+	EndIf
+
+EndFunc
+
+Func SkypeChat($vUsername, $vContent)
 	If $vUsername <> "" Then
 		Local $wktitle = WinGetTitle("Skype™","")
+
 		WinActivate($wktitle)
+		WinWaitActive($wktitle)
+
 		ControlFocus($wktitle, "","[CLASS:TConversationsControl; INSTANCE:1")
 		Sleep(500)
+
+		;click Search Control
 		ControlClick($wktitle, "","[CLASS:TSearchControl; INSTANCE:1]")
-		;AutoItSetOption("SendKeyDelay", 10)
 		Send($vUsername)
 		Sleep(500)
-		; Send("{TAB}")
-		; Send("{TAB}")
 		Send("{ENTER}")
 		Sleep(500)
+
 		For $i=0 To UBound($vContent) - 1
 		   If $vContent[$i]<>"" Then
 			   Send($vContent[$i])
@@ -83,7 +137,7 @@ Func Skypechat($vUsername, $vContent)
 	EndIf
 EndFunc
 
-Func linechat($lUsername, $lContent)
+Func LineChat($lUsername, $lContent)
 	If $lUsername <> "" Then
 		;Capture  LINE UI  by Class properties
 		Local $linetitle =  WinWait("[CLASS:Qt5QWindowIcon]", "", 3)
@@ -143,19 +197,33 @@ Func GetMessage($logItem)
 	Return $messageContent;
 EndFunc
 
-Func botchatskype($Data)
+Func QuitAndReRunSkype($startTime, $endTime, $user, $password)
+	Local $nowTime = _NowTime()
+
+	If _IsBetweenTimes($nowTime, $startTime, $endTime) Then
+		ProcessClose($skypeProcessName)
+		ProcessWaitClose($skypeProcessName)
+
+		RunAndLoginSkypeIfNotLogin($user, $password)
+	EndIf
+EndFunc
+
+Func BotChatSkype($Data, $user, $password)
 	For $i=0 to UBound($Data)-1
+
+		RunAndLoginSkypeIfNotLogin($user, $password)
+
 		Local $logItem = $Data[$i]
 
 		Local $messageContent = GetMessage($logItem)
 
 		Local $SkypeGroup = Json_Get($logItem,'.GroupChat.SkypeGroup')
 
-		Skypechat($SkypeGroup,$messageContent)
+		SkypeChat($SkypeGroup,$messageContent)
 	Next
 EndFunc
 
-Func botchatline($Data)
+Func BotChatLine($Data)
 	For $i=0 to UBound($Data)-1
 		Local $logItem = $Data[$i]
 
@@ -163,7 +231,7 @@ Func botchatline($Data)
 
 		Local $lineGroup = Json_Get($logItem,'.GroupChat.LineGroup')
 
-		Linechat($lineGroup,$messageContent)
+		LineChat($lineGroup,$messageContent)
 	Next
 EndFunc
 
@@ -199,16 +267,29 @@ EndFunc
 Func Initialize()
 	;===========Config=============
 	Opt("SendKeyDelay", 0)
+	Opt("MouseCoordMode", 2)
 
 	;Local Environment:
 	;Local $sAPILink = "http://10.18.200.114:81/api/LogManager/GetAppLog"
 	;Local $user = "spvn\jenkins.ci"
 	;Local $password = "sunrise"
+	;Local $skypeUser = ""
+	;Local $skypePassword = ""
+	;Local $lineUser = ""
+	;Local $linePassword = ""
+	;Local $startTime = "12:30:00"
+	;Local $endTime = "12:45:00"
 
 	;Production Environment:
 	Local $sAPILink = "http://63.216.192.186/applogapi/api/LogManager/GetAppLog"
 	Local $user = "kbt\webdeployer.vn"
 	Local $password = "&hdke839D#4GY!)"
+	Local $skypeUser = "starix_soft_bot"
+	Local $skypePassword = "1234aaAA"
+	Local $lineUser = "it@starixsoft.com"
+	Local $linePassword = "2211aa"
+	Local $startTime = "23:55:00"
+	Local $endTime = "23:59:59"
 
 	; Logs from last 5 min till now
 	Local $toDateTime = _NowCalc()
@@ -218,16 +299,23 @@ Func Initialize()
 
 	$sAPILink = $sAPILink & '?FromDate=' & $fromDateTime & '&ToDate=' & $toDateTime &  '&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;debug
-	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f03+12:55:00&ToDate=2015%2f11%2f03+17:00:00&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f09+10:00:00&ToDate=2015%2f11%2f09+10:05:10&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;MsgBox($MB_SYSTEMMODAL, "API Link", $sAPILink)
 
 	Local $logData = GetAppLog($sAPILink, $user, $password)
 
 	If UBound($logData) > 0 Then
-		botchatskype($logData)
 
-		checklinestatus()
-		botchatline($logData)
+		BotChatSkype($logData, $skypeUser, $skypePassword)
+
+		;quit & re-run Skype to release memory if now time between $startTime and $endTime
+		QuitAndReRunSkype($startTime, $endTime, $skypeUser, $skypePassword)
+
+		Opt("MouseCoordMode", 1)
+
+		RunAndLoginLineIfNotLogin($lineUser, $linePassword)
+
+		BotChatLine($logData)
 	EndIf
 
 EndFunc
