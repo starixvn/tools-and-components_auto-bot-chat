@@ -127,7 +127,7 @@ Func SkypeChat($vUsername, $vContent)
 
 		For $i=0 To UBound($vContent) - 1
 		   If $vContent[$i]<>"" Then
-			   Send($vContent[$i])
+			   Send($vContent[$i],1)
 			   Send("{LSHIFT}+{ENTER}")
 			   EndIf
 			Next
@@ -156,9 +156,9 @@ Func LineChat($lUsername, $lContent)
 		Local $wlusertitle = WinGetTitle("[ACTIVE]") ; Check User exist or Not
 		If $wlusertitle = $lUsername Then ;If exist then input content
 			For $i=0 To UBound($lContent) - 1
-			   Send($lContent[$i]&"{LSHIFT}+{ENTER}")
-			  ;Send("{LSHIFT}{ENTER}")
-			   Sleep(200)
+				Send($lContent[$i],1)
+				Send("{LSHIFT}+{ENTER}")
+				Sleep(200)
 			Next
 			Send("{ENTER}")
 			Send("{ESCAPE}")
@@ -174,7 +174,7 @@ Func GetMessage($logItem)
 	_ArrayAdd($messageContent,"Category: "&$category)
 
 	Local $Timestamp = StringReplace(Json_Get($logItem,'.Timestamp'),"T"," ")
-	_ArrayAdd($messageContent,"Timestamp: "&$Timestamp)
+	_ArrayAdd($messageContent,"Timestamp: "&$Timestamp & " (GMT+7)")
 
 	Local $Severity = Json_Get($logItem,'.Severity')
 	_ArrayAdd($messageContent,"Severity: "&$Severity)
@@ -299,7 +299,7 @@ Func Initialize()
 
 	$sAPILink = $sAPILink & '?FromDate=' & $fromDateTime & '&ToDate=' & $toDateTime &  '&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;debug
-	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f09+10:00:00&ToDate=2015%2f11%2f09+10:05:10&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f17+8:55:00&ToDate=2015%2f11%2f17+9:09:43&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;MsgBox($MB_SYSTEMMODAL, "API Link", $sAPILink)
 
 	Local $logData = GetAppLog($sAPILink, $user, $password)
