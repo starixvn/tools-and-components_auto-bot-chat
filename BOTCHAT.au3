@@ -309,11 +309,11 @@ Func Initialize()
 		;quit & re-run Skype to release memory if now time between $startTime and $endTime
 		QuitAndReRunSkype($startTime, $endTime, $skypeUser, $skypePassword)
 
-		Opt("MouseCoordMode", 1)
+		;Opt("MouseCoordMode", 1)
 
-		RunAndLoginLineIfNotLogin($lineUser, $linePassword)
+		;RunAndLoginLineIfNotLogin($lineUser, $linePassword)
 
-		BotChatLine($logData)
+		;BotChatLine($logData)
 	EndIf
 
 EndFunc
