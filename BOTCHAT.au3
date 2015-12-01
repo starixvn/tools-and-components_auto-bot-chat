@@ -246,13 +246,11 @@ Func GetAppLog($sAPILink, $user, $password)
 	; Download the body response if any, and get the server status response code.
 	Local $oReceived = $oHTTP.ResponseText
 	Local $oStatusCode = $oHTTP.Status
+	Local $Data = ''
 
-	If $oStatusCode <> 200 then
-		MsgBox($MB_SYSTEMMODAL, "Response code", $oStatusCode)
+	If $oStatusCode == 200 then
+		$Data = Json_Decode($oReceived)
 	EndIf
-
-	;Decode Json data
-	Local $Data = Json_Decode($oReceived)
 
 	Return $Data
 EndFunc
