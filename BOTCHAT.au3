@@ -279,7 +279,7 @@ Func Initialize()
 	;Local $endTime = "12:45:00"
 
 	;Production Environment:
-	Local $sAPILink = "http://63.216.192.186/applogapi/api/LogManager/GetAppLog"
+	Local $sAPILink = "http://58.86.55.10/applogapi/api/LogManager/GetAppLog"
 	Local $user = "kbt\webdeployer.vn"
 	Local $password = "&hdke839D#4GY!)"
 	Local $skypeUser = "starix_soft_bot"
