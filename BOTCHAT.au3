@@ -68,6 +68,11 @@ Func RunAndLoginLineIfNotLogin($user, $password)
 
 EndFunc
 
+Func RunLine()
+	Run($lineExecutableFilePath)
+	Sleep(1000)
+EndFunc
+
 Func RunAndLoginSkypeIfNotLogin($user, $password)
 
 	If ProcessExists($skypeProcessName) == 0 Then
@@ -141,6 +146,12 @@ Func LineChat($lUsername, $lContent)
 	If $lUsername <> "" Then
 		;Capture  LINE UI  by Class properties
 		Local $linetitle =  WinWait("[CLASS:Qt5QWindowIcon]", "", 3)
+
+		If $linetitle = 0 then
+			RunLine()
+			$linetitle =  WinWait("[CLASS:Qt5QWindowIcon]", "", 3)
+		EndIf
+
 		WinActivate($linetitle)
 
 		local $a = WinGetPos("[CLASS:Qt5QWindowIcon]")
@@ -232,6 +243,12 @@ Func BotChatLine($Data)
 		Local $lineGroup = Json_Get($logItem,'.GroupChat.LineGroup')
 
 		LineChat($lineGroup,$messageContent)
+
+		;Close Main Windows
+		If $i = UBound($Data)-1 Then
+			Send("{ESCAPE}")
+			Sleep(500)
+		EndIf
 	Next
 EndFunc
 
@@ -268,15 +285,17 @@ Func Initialize()
 	Opt("MouseCoordMode", 2)
 
 	;Local Environment:
-	;Local $sAPILink = "http://10.18.200.114:81/api/LogManager/GetAppLog"
-	;Local $user = "spvn\jenkins.ci"
-	;Local $password = "sunrise"
-	;Local $skypeUser = ""
-	;Local $skypePassword = ""
-	;Local $lineUser = ""
-	;Local $linePassword = ""
-	;Local $startTime = "12:30:00"
-	;Local $endTime = "12:45:00"
+	#cs
+	Local $sAPILink = "http://10.18.200.114:81/api/LogManager/GetAppLog"
+	Local $user = "spvn\jenkins.ci"
+	Local $password = "sunrise"
+	Local $skypeUser = ""
+	Local $skypePassword = ""
+	Local $lineUser = ""
+	Local $linePassword = ""
+	Local $startTime = "12:30:00"
+	Local $endTime = "12:45:00"
+	#ce
 
 	;Production Environment:
 	Local $sAPILink = "http://58.86.55.10/applogapi/api/LogManager/GetAppLog"
@@ -297,7 +316,7 @@ Func Initialize()
 
 	$sAPILink = $sAPILink & '?FromDate=' & $fromDateTime & '&ToDate=' & $toDateTime &  '&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;debug
-	;$sAPILink = $sAPILink&'?FromDate=2015%2f11%2f17+8:55:00&ToDate=2015%2f11%2f17+9:09:43&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
+	;$sAPILink = $sAPILink&'?FromDate=2016%2f01%2f21+12:05:20&ToDate=2016%2f01%2f21+12:05:40&ClientTimeZone=7&IsProduction=True&Severity=Error%2c+Critical'
 	;MsgBox($MB_SYSTEMMODAL, "API Link", $sAPILink)
 
 	Local $logData = GetAppLog($sAPILink, $user, $password)
@@ -311,9 +330,8 @@ Func Initialize()
 
 		Opt("MouseCoordMode", 1)
 
-		RunAndLoginLineIfNotLogin($lineUser, $linePassword)
-
 		BotChatLine($logData)
+
 	EndIf
 
 EndFunc
